@@ -1,0 +1,9 @@
+<library path="rl_sim2real_hardware_interface">
+  <class name="rl_sim2real_hardware_interface/RL_Sim2RealHardwareInterface"
+         type="rl_sim2real::RL_Sim2RealHardwareInterface"
+         base_class_type="hardware_interface::SystemInterface">
+    <description>
+      Hardware interface using custom serial protocol over UART
+    </description>
+  </class>
+</library>

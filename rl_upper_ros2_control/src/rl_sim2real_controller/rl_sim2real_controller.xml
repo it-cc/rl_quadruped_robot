@@ -1,0 +1,8 @@
+<library path="rl_sim2real_controller">
+  <class name="rl_sim2real_controller/RL_Sim2RealController"
+         type="rl_sim2real::RL_Sim2RealController"
+         base_class_type="controller_interface::ChainableControllerInterface">
+    <description>
+    </description>
+  </class>
+</library>

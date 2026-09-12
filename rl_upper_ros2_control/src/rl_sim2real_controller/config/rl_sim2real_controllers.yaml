@@ -1,0 +1,14 @@
+controller_manager:
+  ros__parameters:
+    update_rate: 250
+
+    rl_sim2real_controller:
+      type: rl_sim2real_controller/RL_Sim2RealController
+
+rl_sim2real_controller:
+  ros__parameters:
+    policy_path: /home/cc/workspace/rl/luwu_mjlab/logs/rsl_rl/my_quadruped_velocity/2026-09-12_01-28-24/policy.onnx
+    control_period: 0.02
+    action_scale: 0.25
+    standing_linear_velocity_deadband: 0.02
+    standing_angular_velocity_deadband: 0.02
