@@ -16,6 +16,5 @@ add_executable(latency_test_node src/latency_test_node.cpp)
 ament_target_dependencies(latency_test_node rclcpp std_msgs)
 
 install(TARGETS latency_test_node DESTINATION lib/${PROJECT_NAME})
-install(FILES README.md DESTINATION share/${PROJECT_NAME})
 
 ament_package()

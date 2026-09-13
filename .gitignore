@@ -8,6 +8,9 @@ mx.scratch
 .build.sh
 docs
 tools
+!tools/
+tools/*
+!tools/sync_default_joint.py
 *.jdebug
 *.jdebug.user
 micro_ros_stm32cubemx_utils

@@ -23,11 +23,33 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS TRUE)
 project(${CMAKE_PROJECT_NAME})
 message("Build type: " ${CMAKE_BUILD_TYPE})
 
+find_package(Python3 REQUIRED COMPONENTS Interpreter)
+set(REPO_ROOT "${CMAKE_CURRENT_SOURCE_DIR}/..")
+set(DEFAULT_JOINT_SCENE
+    "${REPO_ROOT}/rl_mjlab/src/assets/robots/my_quadruped/mjcf/scene.xml")
+set(DEFAULT_JOINT_ROBOT
+    "${REPO_ROOT}/rl_mjlab/src/assets/robots/my_quadruped/mjcf/my_quadruped.xml")
+set(DEFAULT_JOINT_GENERATOR "${REPO_ROOT}/tools/sync_default_joint.py")
+set(DEFAULT_JOINT_INCLUDE_DIR "${CMAKE_CURRENT_BINARY_DIR}/generated_default_joint")
+set(DEFAULT_JOINT_HEADER
+    "${DEFAULT_JOINT_INCLUDE_DIR}/default_joint_constants.hpp")
+add_custom_command(
+    OUTPUT "${DEFAULT_JOINT_HEADER}"
+    COMMAND "${Python3_EXECUTABLE}" "${DEFAULT_JOINT_GENERATOR}"
+            --scene "${DEFAULT_JOINT_SCENE}" --cpp-output "${DEFAULT_JOINT_HEADER}"
+    DEPENDS "${DEFAULT_JOINT_SCENE}" "${DEFAULT_JOINT_ROBOT}"
+            "${DEFAULT_JOINT_GENERATOR}"
+    VERBATIM
+)
+add_custom_target(generate_default_joint_constants
+    DEPENDS "${DEFAULT_JOINT_HEADER}")
+
 # Enable CMake support for ASM and C languages
 enable_language(C CXX ASM)
 
 # Create an executable object type
 add_executable(${CMAKE_PROJECT_NAME})
+add_dependencies(${CMAKE_PROJECT_NAME} generate_default_joint_constants)
 
 # Add STM32CubeMX generated sources
 add_subdirectory(cmake/stm32cubemx)
@@ -73,6 +95,7 @@ target_sources(${CMAKE_PROJECT_NAME} PRIVATE
 
 # Add include paths
 target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE
+    ${DEFAULT_JOINT_INCLUDE_DIR}
     ${CMAKE_SOURCE_DIR}/User/include
     ${CMAKE_SOURCE_DIR}/Quadruped_Api/Inc
     ${CMAKE_SOURCE_DIR}/Quadruped_Hardware/Inc

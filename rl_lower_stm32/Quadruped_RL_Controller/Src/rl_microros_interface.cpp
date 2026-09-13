@@ -11,6 +11,7 @@
 #include <cstring>
 
 #include "main.h"
+#include "default_joint_constants.hpp"
 #include "rl_microros_interface.h"
 
 extern "C"
@@ -34,10 +35,6 @@ constexpr float kStandardGravity = 9.80665F;
 constexpr float kRemoteLinearXScale = 0.3F;
 constexpr float kRemoteLinearYScale = 0.3F;
 constexpr float kRemoteAngularZScale = 1.0F;
-
-constexpr std::array<float, 12> kDefaultJointPosition = {
-    0.0, 0.6151, -0.9065, 0.0, 0.6151, -0.9065,
-    0.0, 0.6519, -0.9709, 0.0, 0.6519, -0.9709};
 
 RL_MicroRosInterface* g_interface_instance = nullptr;
 
@@ -68,7 +65,7 @@ void RL_MicroRosInterface::init()
   imu_.start();
   remote_control_.start();
   servo_.init();
-  servo_.setAllServoAngles(kDefaultJointPosition.data());
+  servo_.setAllServoAngles(rl_quadruped::kDefaultJointPosition.data());
   initialized_ = true;
   g_interface_instance = this;
 }

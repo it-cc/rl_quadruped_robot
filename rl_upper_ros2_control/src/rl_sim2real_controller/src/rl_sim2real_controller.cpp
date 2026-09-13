@@ -7,6 +7,7 @@
 #include <stdexcept>
 
 #include "pluginlib/class_list_macros.hpp"
+#include "default_joint_constants.hpp"
 #include "rl_sim2real_controller/rl_sim2real_controller.hpp"
 
 namespace rl_sim2real
@@ -20,9 +21,6 @@ constexpr std::array<const char*, 12> kJointNames = {
     "back_left_hip_joint",     "back_left_thigh_joint",
     "back_left_calf_joint",    "back_right_hip_joint",
     "back_right_thigh_joint",  "back_right_calf_joint"};
-constexpr std::array<float, 12> kDefaultJointPosition = {
-    0.0, 0.6151, -0.9065, 0.0, 0.6151, -0.9065,
-    0.0, 0.6519, -0.9709, 0.0, 0.6519, -0.9709};
 }  // namespace
 
 controller_interface::InterfaceConfiguration
@@ -201,7 +199,7 @@ controller_interface::CallbackReturn RL_Sim2RealController::on_init()
                  "deadbands must be >= 0");
     return controller_interface::CallbackReturn::ERROR;
   }
-  default_joint_position_ = kDefaultJointPosition;
+  default_joint_position_ = rl_quadruped::kDefaultJointPosition;
   last_action_.fill(0.0F);
   exported_joint_positions_.fill(0.0);
   return controller_interface::CallbackReturn::SUCCESS;

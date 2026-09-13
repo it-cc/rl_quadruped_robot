@@ -1,4 +1,5 @@
 #include "api_serial.h"
+#include "default_joint_constants.hpp"
 #include "imu_JY901S_test.h"
 #include "stm32h5xx_hal.h"
 #include "usart.h"
@@ -9,8 +10,6 @@ namespace
 {
 constexpr uint8_t kVofaTail[] = {0x00, 0x00, 0x80, 0x7F};
 
-constexpr std::array<float, 12> kDefaultJointPosition = {
-    0.0F, 0.9F, -1.8F, 0.0F, 0.9F, -1.8F, 0.0F, 0.9F, -1.8F, 0.0F, 0.9F, -1.8F};
 void sendFloat(float value)
 {
   HAL_UART_Transmit(&huart7, reinterpret_cast<const uint8_t*>(&value),
@@ -31,7 +30,7 @@ void ImuJY901STest::init()
   imu_.readCfg();
 
   servo_.init();
-  servo_.setAllServoAngles(kDefaultJointPosition.data());
+  servo_.setAllServoAngles(rl_quadruped::kDefaultJointPosition.data());
 
   stateStartTick_ = HAL_GetTick();
   state_ = State::WaitingConfig;

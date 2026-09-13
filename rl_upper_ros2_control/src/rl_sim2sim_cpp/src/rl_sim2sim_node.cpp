@@ -289,11 +289,27 @@ std::array<float, Sim2SimNode::kActionDim> Sim2SimNode::forward_policy()
 
 void Sim2SimNode::set_initial_pose()
 {
+  const int home_key_id = mj_name2id(model_, mjOBJ_KEY, "home");
+  if (home_key_id < 0)
+    throw std::runtime_error("找不到 MuJoCo keyframe: home");
+
   const std::array<float, 3> position{0.0f, 0.0f, 0.23f};
   const std::array<float, 4> quaternion{1.0f, 0.0f, 0.0f, 0.0f};
   for (int i = 0; i < 3; ++i) data_->qpos[i] = position[i];
   for (int i = 0; i < 4; ++i) data_->qpos[3 + i] = quaternion[i];
-  for (int i = 0; i < kJointCount; ++i) data_->qpos[qpos_indices_[i]] = kDefaultJointAngles[i];
+  const mjtNum* home_qpos = model_->key_qpos + home_key_id * model_->nq;
+  std::fill(data_->qvel, data_->qvel + model_->nv, 0.0);
+  if (model_->na > 0) std::fill(data_->act, data_->act + model_->na, 0.0);
+  for (int i = 0; i < kJointCount; ++i)
+  {
+    data_->qpos[qpos_indices_[i]] = home_qpos[qpos_indices_[i]];
+    default_joint_angles_[i] = static_cast<float>(home_qpos[qpos_indices_[i]]);
+  }
+  if (model_->nu > 0)
+  {
+    const mjtNum* home_ctrl = model_->key_ctrl + home_key_id * model_->nu;
+    std::copy(home_ctrl, home_ctrl + model_->nu, data_->ctrl);
+  }
   phase_time_seconds_ = 0.0;
   last_actions_.fill(0.0f);
   observation_.fill(0.0f);
@@ -355,7 +371,7 @@ void Sim2SimNode::run(float vx, float vy, float wz)
     const auto actions = forward_policy();
     std::array<float, kActionDim> joint_angles{};
     for (int i = 0; i < kActionDim; ++i)
-      joint_angles[i] = actions[i] * action_scale_ + kDefaultJointAngles[i];
+      joint_angles[i] = actions[i] * action_scale_ + default_joint_angles_[i];
 
     for (int i = 0; i < control_decimation_; ++i) {
       set_joint_targets(joint_angles);

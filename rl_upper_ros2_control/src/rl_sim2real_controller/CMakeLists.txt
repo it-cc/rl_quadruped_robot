@@ -18,6 +18,27 @@ find_package(hardware_interface REQUIRED)
 find_package(pluginlib REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(rclcpp_lifecycle REQUIRED)
+find_package(Python3 REQUIRED COMPONENTS Interpreter)
+
+set(REPO_ROOT "${CMAKE_CURRENT_SOURCE_DIR}/../../../")
+set(DEFAULT_JOINT_SCENE
+    "${REPO_ROOT}/rl_mjlab/src/assets/robots/my_quadruped/mjcf/scene.xml")
+set(DEFAULT_JOINT_ROBOT
+    "${REPO_ROOT}/rl_mjlab/src/assets/robots/my_quadruped/mjcf/my_quadruped.xml")
+set(DEFAULT_JOINT_GENERATOR "${REPO_ROOT}/tools/sync_default_joint.py")
+set(DEFAULT_JOINT_INCLUDE_DIR "${CMAKE_CURRENT_BINARY_DIR}/generated_default_joint")
+set(DEFAULT_JOINT_HEADER
+    "${DEFAULT_JOINT_INCLUDE_DIR}/default_joint_constants.hpp")
+add_custom_command(
+  OUTPUT "${DEFAULT_JOINT_HEADER}"
+  COMMAND "${Python3_EXECUTABLE}" "${DEFAULT_JOINT_GENERATOR}"
+          --scene "${DEFAULT_JOINT_SCENE}" --cpp-output "${DEFAULT_JOINT_HEADER}"
+  DEPENDS "${DEFAULT_JOINT_SCENE}" "${DEFAULT_JOINT_ROBOT}"
+          "${DEFAULT_JOINT_GENERATOR}"
+  VERBATIM
+)
+add_custom_target(generate_default_joint_constants
+  DEPENDS "${DEFAULT_JOINT_HEADER}")
 
 find_path(ONNXRUNTIME_INCLUDE_DIR onnxruntime_cxx_api.h
   PATHS /opt/onnxruntime/include REQUIRED NO_DEFAULT_PATH)
@@ -27,12 +48,14 @@ find_library(ONNXRUNTIME_LIBRARY onnxruntime
 add_library(${PROJECT_NAME} SHARED
   src/rl_sim2real_controller.cpp
 )
+add_dependencies(${PROJECT_NAME} generate_default_joint_constants)
 
 target_include_directories(${PROJECT_NAME} PUBLIC
   "$<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include>"
   "$<INSTALL_INTERFACE:include/${PROJECT_NAME}>"
   ${ONNXRUNTIME_INCLUDE_DIR}
 )
+target_include_directories(${PROJECT_NAME} PRIVATE "${DEFAULT_JOINT_INCLUDE_DIR}")
 
 ament_target_dependencies(${PROJECT_NAME}
   controller_interface

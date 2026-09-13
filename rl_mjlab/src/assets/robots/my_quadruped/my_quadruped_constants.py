@@ -1,6 +1,7 @@
 """Custom quadruped constants."""
 
 from pathlib import Path
+import xml.etree.ElementTree as ET
 
 import mujoco
 from mjlab.actuator import XmlPositionActuatorCfg
@@ -13,7 +14,43 @@ from src import SRC_PATH
 MY_QUADRUPED_XML: Path = (
   SRC_PATH / "assets" / "robots" / "my_quadruped" / "mjcf" / "my_quadruped.xml"
 )
+MY_QUADRUPED_SCENE_XML: Path = MY_QUADRUPED_XML.parent / "scene.xml"
 assert MY_QUADRUPED_XML.exists()
+assert MY_QUADRUPED_SCENE_XML.exists()
+
+
+def _get_default_joint_positions() -> dict[str, float]:
+  """Read the training reset pose from the MuJoCo home keyframe."""
+  scene_root = ET.parse(MY_QUADRUPED_SCENE_XML).getroot()
+  key = scene_root.find("./keyframe/key[@name='home']")
+  if key is None:
+    raise ValueError("scene.xml must define keyframe 'home'")
+
+  qpos_text = key.get("qpos")
+  ctrl_text = key.get("ctrl")
+  if qpos_text is None or ctrl_text is None:
+    raise ValueError("scene.xml home keyframe must define qpos and ctrl")
+  qpos = [float(value) for value in qpos_text.split()]
+  ctrl = [float(value) for value in ctrl_text.split()]
+  joint_names = (
+    "FL_hip_joint", "FL_thigh_joint", "FL_calf_joint",
+    "FR_hip_joint", "FR_thigh_joint", "FR_calf_joint",
+    "RL_hip_joint", "RL_thigh_joint", "RL_calf_joint",
+    "RR_hip_joint", "RR_thigh_joint", "RR_calf_joint",
+  )
+  joint_qpos = qpos[7:]
+  if len(qpos) != 19 or len(ctrl) != len(joint_names):
+    raise ValueError("scene.xml home keyframe must define 12 joint values")
+  if joint_qpos != ctrl:
+    raise ValueError("scene.xml home qpos and ctrl joint values must match")
+  model_joint_names = [
+    element.get("name")
+    for element in ET.parse(MY_QUADRUPED_XML).getroot().iter("joint")
+    if element.get("name") is not None
+  ]
+  if model_joint_names != ["float_base", *joint_names]:
+    raise ValueError("my_quadruped.xml joint order does not match scene.xml")
+  return dict(zip(joint_names, joint_qpos, strict=True))
 
 
 def get_assets(meshdir: str) -> dict[str, bytes]:
@@ -40,11 +77,8 @@ MY_QUADRUPED_XML_ACTUATOR = XmlPositionActuatorCfg(
 INIT_STATE = EntityCfg.InitialStateCfg(
   pos=(0.0, 0.0, 0.23),
   joint_pos={
-    r"^(FL|FR|RL|RR)_hip_joint$": 0.0,
-    r"^(FL|FR)_thigh_joint$": 0.6151,
-    r"^(RL|RR)_thigh_joint$": 0.6519,
-    r"^(FL|FR)_calf_joint$": -0.9065,
-    r"^(RL|RR)_calf_joint$": -0.9709,
+    rf"^{name}$": value
+    for name, value in _get_default_joint_positions().items()
   },
   joint_vel={r".*": 0.0},
 )

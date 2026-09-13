@@ -4,6 +4,7 @@
 
 #include "hardware_interface/types/hardware_interface_return_values.hpp"
 #include "rclcpp/logging.hpp"
+#include "default_joint_constants.hpp"
 #include "rl_sim2real_hardware_interface/rl_sim2real_hardware_interface.hpp"
 
 namespace rl_sim2real
@@ -11,8 +12,6 @@ namespace rl_sim2real
 
 namespace
 {
-constexpr std::array<double, 12> kDefaultJointPosition = {
-    0.0, 0.9, -1.8, 0.0, 0.9, -1.8, 0.0, 0.9, -1.7, 0.0, 0.9, -1.7};
 constexpr double kStandardGravity = 9.80665;
 }
 
@@ -25,7 +24,7 @@ hardware_interface::CallbackReturn RL_Sim2RealHardwareInterface::on_init(
     return hardware_interface::CallbackReturn::ERROR;
   }
 
-  joint_commands_ = kDefaultJointPosition;
+  joint_commands_ = rl_quadruped::kDefaultJointPositionDouble;
   robot_velocity_.fill(0.0);
   imu_values_.fill(0.0);
   imu_values_[8] = kStandardGravity;
@@ -82,7 +81,7 @@ hardware_interface::CallbackReturn RL_Sim2RealHardwareInterface::on_activate(
   last_debug_log_time_ = std::chrono::steady_clock::now();
   next_command_publish_time_ = std::chrono::steady_clock::now();
 
-  joint_commands_ = kDefaultJointPosition;
+  joint_commands_ = rl_quadruped::kDefaultJointPositionDouble;
 
   RCLCPP_INFO(rclcpp::get_logger(node_name_), "micro-ROS interface activated");
 

@@ -54,13 +54,6 @@ class Sim2SimNode
       "FR_thigh_joint", "FR_calf_joint",  "RL_hip_joint",   "RL_thigh_joint",
       "RL_calf_joint",  "RR_hip_joint",   "RR_thigh_joint", "RR_calf_joint"};
 
-  static constexpr std::array<float, kJointCount> kDefaultJointAngles = {
-      0.0f, 0.9f, -1.8f, // FL: hip, thigh, calf
-      0.0f, 0.9f, -1.8f, // FR: hip, thigh, calf
-      0.0f, 0.9f, -1.7f, // RL: hip, thigh, calf
-      0.0f, 0.9f, -1.7f  // RR: hip, thigh, calf
-  };
-
   mjModel* model_{nullptr};
   mjData* data_{nullptr};
   GLFWwindow* window_{nullptr};
@@ -83,6 +76,7 @@ class Sim2SimNode
   int trunk_id_{-1};
   std::vector<int> qpos_indices_;
   std::vector<int> ctrl_indices_;
+  std::array<float, kActionDim> default_joint_angles_{};
   std::array<float, 3> command_{};
   std::array<float, kActionDim> last_actions_{};
   std::array<float, kObservationDim> observation_{};
