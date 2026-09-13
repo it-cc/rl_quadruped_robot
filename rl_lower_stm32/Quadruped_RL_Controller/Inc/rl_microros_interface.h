@@ -27,6 +27,8 @@ class RL_MicroRosInterface : public task::ManagedTask
   void taskProcess() override;
 
  private:
+  static constexpr uint32_t kStatePublishPeriodMs = 10U;
+
   void initMicroRos();
   void publishState();
 
@@ -45,6 +47,7 @@ class RL_MicroRosInterface : public task::ManagedTask
   uint32_t error_state_{0U};
   uint8_t last_sequence_{0U};
   uint32_t last_command_ms_{0U};
+  uint32_t next_state_publish_ms_{0U};
   uint32_t last_debug_print_ms_{0U};
   bool microros_initialized_{false};
   bool initialized_{false};

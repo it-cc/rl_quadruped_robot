@@ -168,6 +168,7 @@ void RL_MicroRosInterface::publishState()
   const types::Gyroscope gyro = imu_.getAngularVelocity();
   const types::Accelerometer accel = imu_.getAcceleration();
 
+  // orientation[0] is roll,orientation[1] is pitch,adapt to imu mounting orientation
   state_msg.orientation[0] = angle.pitch * kDegreesToRadians;
   state_msg.orientation[1] = angle.roll * kDegreesToRadians;
   state_msg.orientation[2] = -angle.yaw * kDegreesToRadians;
@@ -228,7 +229,18 @@ void RL_MicroRosInterface::taskProcess()
                             RCL_MS_TO_NS(1));
   }
 
-  publishState();
+  const uint32_t now = HAL_GetTick();
+  if (next_state_publish_ms_ == 0U)
+    next_state_publish_ms_ = now;
+
+  if (static_cast<int32_t>(now - next_state_publish_ms_) >= 0)
+  {
+    do
+    {
+      next_state_publish_ms_ += kStatePublishPeriodMs;
+    } while (static_cast<int32_t>(now - next_state_publish_ms_) >= 0);
+    publishState();
+  }
 }
 
 }  // namespace rl_controller

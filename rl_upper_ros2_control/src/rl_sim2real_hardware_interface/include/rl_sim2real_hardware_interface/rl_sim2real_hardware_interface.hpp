@@ -50,6 +50,7 @@ class RL_Sim2RealHardwareInterface
   static constexpr std::size_t kJointCount = 12;
   static constexpr std::size_t kRobotVelocityCount = 3;
   static constexpr std::size_t kImuValueCount = 9;
+  static constexpr std::chrono::milliseconds kCommandPublishPeriod{20};
 
   void state_callback(const rl_sim2real_msgs::msg::RobotState::SharedPtr msg);
   std::string hardware_parameter(const std::string& name,
@@ -80,6 +81,7 @@ class RL_Sim2RealHardwareInterface
   bool has_feedback_{false};
   std::chrono::steady_clock::time_point last_feedback_time_{};
   std::chrono::steady_clock::time_point last_debug_log_time_{};
+  std::chrono::steady_clock::time_point next_command_publish_time_{};
 
 };
 }  // namespace rl_sim2real

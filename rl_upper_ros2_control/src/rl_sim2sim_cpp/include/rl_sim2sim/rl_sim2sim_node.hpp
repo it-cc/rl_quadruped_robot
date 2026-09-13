@@ -36,6 +36,13 @@ class Sim2SimNode
   void render();
   bool window_closed() const;
 
+  static void mouse_button_callback(GLFWwindow* window, int button, int action, int mods);
+  static void mouse_move_callback(GLFWwindow* window, double xpos, double ypos);
+  static void scroll_callback(GLFWwindow* window, double xoffset, double yoffset);
+  void handle_mouse_button(int button, int action);
+  void handle_mouse_move(double xpos, double ypos);
+  void handle_scroll(double yoffset);
+
   static std::array<float, 3> read_sensor(const mjModel* model,
                                           const mjData* data, const char* name);
   static std::array<float, 3> quat_rotate_inverse(
@@ -48,8 +55,11 @@ class Sim2SimNode
       "RL_calf_joint",  "RR_hip_joint",   "RR_thigh_joint", "RR_calf_joint"};
 
   static constexpr std::array<float, kJointCount> kDefaultJointAngles = {
-      0.0, 0.6151, -0.9065, 0.0, 0.6151, -0.9065,
-      0.0, 0.6519, -0.9709, 0.0, 0.6519, -0.9709};
+      0.0f, 0.9f, -1.8f, // FL: hip, thigh, calf
+      0.0f, 0.9f, -1.8f, // FR: hip, thigh, calf
+      0.0f, 0.9f, -1.7f, // RL: hip, thigh, calf
+      0.0f, 0.9f, -1.7f  // RR: hip, thigh, calf
+  };
 
   mjModel* model_{nullptr};
   mjData* data_{nullptr};
@@ -77,4 +87,9 @@ class Sim2SimNode
   std::array<float, kActionDim> last_actions_{};
   std::array<float, kObservationDim> observation_{};
   double phase_time_seconds_{0.0};
+  bool mouse_left_{false};
+  bool mouse_middle_{false};
+  bool mouse_right_{false};
+  double last_mouse_x_{0.0};
+  double last_mouse_y_{0.0};
 };

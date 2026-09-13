@@ -68,8 +68,8 @@ class RL_Sim2RealController
   std::string policy_path_;
   double control_period_seconds_{0.02};
   float action_scale_{0.25F};
-  float standing_linear_velocity_deadband_{0.02F};
-  float standing_angular_velocity_deadband_{0.02F};
+  float standing_linear_velocity_deadband_{0.1F};
+  float standing_angular_velocity_deadband_{0.1F};
   rclcpp::Time last_policy_time_;
   rclcpp::Time last_debug_log_time_;
   double phase_time_seconds_{0.0};

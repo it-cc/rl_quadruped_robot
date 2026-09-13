@@ -181,10 +181,10 @@ controller_interface::CallbackReturn RL_Sim2RealController::on_init()
         get_node()->declare_parameter<double>("action_scale", 0.25));
     standing_linear_velocity_deadband_ =
         static_cast<float>(get_node()->declare_parameter<double>(
-            "standing_linear_velocity_deadband", 0.02));
+            "standing_linear_velocity_deadband", 0.1));
     standing_angular_velocity_deadband_ =
         static_cast<float>(get_node()->declare_parameter<double>(
-            "standing_angular_velocity_deadband", 0.02));
+            "standing_angular_velocity_deadband", 0.1));
   }
   catch (const std::exception& error)
   {

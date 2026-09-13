@@ -64,6 +64,7 @@ class TerminalController
 void print_controls()
 {
   std::cout << "终端控制: w/s 前后, a/d 横向, e/c 旋转, x 停止, q 退出\n";
+  std::cout << "视角控制: 左键旋转, 右键平移, 中键或滚轮缩放, Shift 改变拖动方向\n";
 }
 }  // namespace
 
@@ -132,6 +133,10 @@ void Sim2SimNode::init_visualizer()
     glfwTerminate();
     throw std::runtime_error("创建 GLFW 窗口失败");
   }
+  glfwSetWindowUserPointer(window_, this);
+  glfwSetMouseButtonCallback(window_, &Sim2SimNode::mouse_button_callback);
+  glfwSetCursorPosCallback(window_, &Sim2SimNode::mouse_move_callback);
+  glfwSetScrollCallback(window_, &Sim2SimNode::scroll_callback);
   glfwMakeContextCurrent(window_);
   glfwSwapInterval(1);
   mjv_defaultCamera(&camera_);
@@ -143,6 +148,61 @@ void Sim2SimNode::init_visualizer()
   camera_.type = mjCAMERA_TRACKING;
   camera_.trackbodyid = trunk_id_;
   camera_.distance = 3.0;
+}
+
+void Sim2SimNode::mouse_button_callback(GLFWwindow* window, int button, int action, int /*mods*/)
+{
+  auto* node = static_cast<Sim2SimNode*>(glfwGetWindowUserPointer(window));
+  if (node) node->handle_mouse_button(button, action);
+}
+
+void Sim2SimNode::mouse_move_callback(GLFWwindow* window, double xpos, double ypos)
+{
+  auto* node = static_cast<Sim2SimNode*>(glfwGetWindowUserPointer(window));
+  if (node) node->handle_mouse_move(xpos, ypos);
+}
+
+void Sim2SimNode::scroll_callback(GLFWwindow* window, double /*xoffset*/, double yoffset)
+{
+  auto* node = static_cast<Sim2SimNode*>(glfwGetWindowUserPointer(window));
+  if (node) node->handle_scroll(yoffset);
+}
+
+void Sim2SimNode::handle_mouse_button(int button, int action)
+{
+  if (button == GLFW_MOUSE_BUTTON_LEFT) mouse_left_ = action == GLFW_PRESS;
+  if (button == GLFW_MOUSE_BUTTON_MIDDLE) mouse_middle_ = action == GLFW_PRESS;
+  if (button == GLFW_MOUSE_BUTTON_RIGHT) mouse_right_ = action == GLFW_PRESS;
+  glfwGetCursorPos(window_, &last_mouse_x_, &last_mouse_y_);
+}
+
+void Sim2SimNode::handle_mouse_move(double xpos, double ypos)
+{
+  if (!mouse_left_ && !mouse_middle_ && !mouse_right_) return;
+
+  const double dx = xpos - last_mouse_x_;
+  const double dy = ypos - last_mouse_y_;
+  last_mouse_x_ = xpos;
+  last_mouse_y_ = ypos;
+
+  int height = 0;
+  glfwGetWindowSize(window_, nullptr, &height);
+  if (height <= 0) return;
+
+  const bool shift = glfwGetKey(window_, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS ||
+                     glfwGetKey(window_, GLFW_KEY_RIGHT_SHIFT) == GLFW_PRESS;
+  mjtMouse action = mjMOUSE_ZOOM;
+  if (mouse_right_) {
+    action = shift ? mjMOUSE_MOVE_H : mjMOUSE_MOVE_V;
+  } else if (mouse_left_) {
+    action = shift ? mjMOUSE_ROTATE_H : mjMOUSE_ROTATE_V;
+  }
+  mjv_moveCamera(model_, action, dx / height, dy / height, &scene_, &camera_);
+}
+
+void Sim2SimNode::handle_scroll(double yoffset)
+{
+  mjv_moveCamera(model_, mjMOUSE_ZOOM, 0.0, -0.05 * yoffset, &scene_, &camera_);
 }
 
 std::array<float, 3> Sim2SimNode::read_sensor(const mjModel* model,
@@ -297,15 +357,6 @@ void Sim2SimNode::run(float vx, float vy, float wz)
     for (int i = 0; i < kActionDim; ++i)
       joint_angles[i] = actions[i] * action_scale_ + kDefaultJointAngles[i];
 
-    constexpr float kRadToDeg = 180.0f / 3.14159265358979323846f;
-    std::cout << "速度 [" << std::fixed << std::setprecision(2) << command_[0] << ", "
-              << command_[1] << ", " << command_[2] << "] 关节角度(度) [";
-    for (int i = 0; i < kJointCount; ++i) {
-      if (i != 0) std::cout << ", ";
-      std::cout << std::setprecision(2) << joint_angles[i] * kRadToDeg;
-    }
-    std::cout << "]\n" << std::flush;
-
     for (int i = 0; i < control_decimation_; ++i) {
       set_joint_targets(joint_angles);
       step();
@@ -324,8 +375,8 @@ int main()
 {
   try {
     Sim2SimNode node(
-        "/home/cc/workspace/rl/luwu_mjlab/src/assets/robots/my_quadruped/mjcf/scene.xml",
-        "/home/cc/workspace/rl/luwu_mjlab/logs/rsl_rl/my_quadruped_velocity/2026-09-12_01-28-24/policy.onnx");
+        "/home/cc/workspace/quadruped_robot/my-quadruped-robot/rl_quadruped_robot/rl_mjlab/src/assets/robots/my_quadruped/mjcf/scene.xml",
+        "/home/cc/workspace/quadruped_robot/my-quadruped-robot/rl_quadruped_robot/rl_mjlab/logs/rsl_rl/my_quadruped_velocity/2026-09-11_21-57-47/policy.onnx");
     node.run(0.5f, 0.0f, 0.0f);
   } catch (const std::exception& error) {
     std::cerr << "sim2sim 失败: " << error.what() << '\n';

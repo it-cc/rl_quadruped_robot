@@ -16,7 +16,7 @@ JOINT_OBS_DELAY_MIN_LAG = 1
 JOINT_OBS_DELAY_MAX_LAG = 2
 ACTUATOR_DELAY_MIN_LAG = 1
 ACTUATOR_DELAY_MAX_LAG = 2
-
+DELAY_UPDATE_PERIOD = 5
 _JOINT_OBS_TERMS = ("joint_pos", "joint_vel")
 
 
@@ -32,6 +32,8 @@ def apply_joint_feedback_delay(cfg: ManagerBasedRlEnvCfg, play: bool = False) ->
       term = group.terms[term_name]
       term.delay_min_lag = min_lag
       term.delay_max_lag = max_lag
+      term.delay_update_period = 0 if play else DELAY_UPDATE_PERIOD
+      term.delay_hold_prob = 0.0
 
 
 def make_delayed_xml_actuator(play: bool = False) -> DelayedActuatorCfg | XmlPositionActuatorCfg:
@@ -44,6 +46,8 @@ def make_delayed_xml_actuator(play: bool = False) -> DelayedActuatorCfg | XmlPos
     delay_target="position",
     delay_min_lag=ACTUATOR_DELAY_MIN_LAG,
     delay_max_lag=ACTUATOR_DELAY_MAX_LAG,
+    delay_update_period=0 if play else DELAY_UPDATE_PERIOD,
+    delay_hold_prob=0.0,
   )
 
 
@@ -85,6 +89,8 @@ def with_delayed_articulation_multi(
         delay_target=delay_target,
         delay_min_lag=ACTUATOR_DELAY_MIN_LAG,
         delay_max_lag=ACTUATOR_DELAY_MAX_LAG,
+        delay_update_period=0 if play else DELAY_UPDATE_PERIOD,
+        delay_hold_prob=0.0,
       )
     )
   delayed_articulation = EntityArticulationInfoCfg(

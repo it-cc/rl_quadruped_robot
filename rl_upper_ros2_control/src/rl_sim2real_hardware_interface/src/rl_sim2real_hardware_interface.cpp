@@ -80,6 +80,7 @@ hardware_interface::CallbackReturn RL_Sim2RealHardwareInterface::on_activate(
 
   last_feedback_time_ = std::chrono::steady_clock::now();
   last_debug_log_time_ = std::chrono::steady_clock::now();
+  next_command_publish_time_ = std::chrono::steady_clock::now();
 
   joint_commands_ = kDefaultJointPosition;
 
@@ -176,6 +177,12 @@ hardware_interface::return_type RL_Sim2RealHardwareInterface::write(
     return hardware_interface::return_type::ERROR;
   }
 
+  const auto now = std::chrono::steady_clock::now();
+  if (now < next_command_publish_time_)
+  {
+    return hardware_interface::return_type::OK;
+  }
+
   // Prepare joint command message
   auto msg = rl_sim2real_msgs::msg::JointCommand();
   msg.sequence = sequence_++;
@@ -188,6 +195,10 @@ hardware_interface::return_type RL_Sim2RealHardwareInterface::write(
   // Publish command
   command_publisher_->publish(msg);
   last_sent_sequence_ = msg.sequence;
+  do
+  {
+    next_command_publish_time_ += kCommandPublishPeriod;
+  } while (next_command_publish_time_ <= now);
 
   // Debug logging
   // auto now = std::chrono::steady_clock::now();
