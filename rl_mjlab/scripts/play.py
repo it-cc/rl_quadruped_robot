@@ -172,6 +172,7 @@ def main():
   # Parse first argument to choose the task.
   # Import tasks to populate the registry.
   import mjlab.tasks  # noqa: F401
+  sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
   import src.tasks
 
   all_tasks = list_tasks()

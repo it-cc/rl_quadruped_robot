@@ -11,7 +11,9 @@ from __future__ import annotations
 
 import dataclasses
 import re
+import sys
 import time
+from pathlib import Path
 from typing import Any, List, TypedDict
 
 import mujoco
@@ -19,6 +21,9 @@ import numpy as np
 import viser
 
 from mjlab.asset_zoo.robots import get_yam_robot_cfg
+
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+
 from src.assets.robots import (
   get_lite3_robot_cfg,
   get_mini2s_robot_cfg,

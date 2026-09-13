@@ -1,11 +1,13 @@
 """Script to list mjlab environments."""
 
+import sys
+from pathlib import Path
+
 import tyro
 from prettytable import PrettyTable
 
 import mjlab
 import mjlab.tasks  # noqa: F401
-import src.tasks
 from mjlab.tasks.registry import list_tasks
 
 
@@ -42,6 +44,9 @@ def list_environments(keyword: str | None = None):
 
 
 def main():
+  sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+  import src.tasks
+
   return tyro.cli(list_environments, config=mjlab.TYRO_FLAGS)
 
 
